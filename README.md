@@ -52,14 +52,8 @@ The model also runs sensitivity analysis on coverage radius (0.5km → 3.0km) sh
 | 1.5 | 6  | 26.8 |
 | 2.0 | 4  | 18.3 |
 
-## 💼 Interview Talking Points
-1. Why Set Cover instead of P-Median? *(Set cover = coverage guarantee; P-median = average distance minimisation — different objectives)*
-2. How would you use real data? *(Uber Movement datasets, HERE traffic flow, municipal parking lot shapefile)*
-3. How to add fast-charging priority? *(Add weighted coverage: high-demand zones need 2+ stations)*
-
 ## 📁 Files
 ```
-06_ev_charging_optimizer/
 ├── ev_charging_optimizer.py   # Full pipeline + sensitivity analysis
 ├── app.py                     # Streamlit interactive map dashboard
 ├── requirements.txt

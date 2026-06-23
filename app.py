@@ -36,6 +36,39 @@ def haversine(lat1, lon1, lat2, lon2):
     a = np.sin(dphi/2)**2 + np.cos(phi1)*np.cos(phi2)*np.sin(dlam/2)**2
     return 2*R*np.arctan2(np.sqrt(a), np.sqrt(1-a))
 
+def output(open_stations, zones, stations, total_cost, n_clusters, gps):
+    c1,c2,c3,c4 = st.columns(4)
+    c1.metric("GPS Points", n_gps)
+    c2.metric("Demand Zones", n_clusters)
+    c3.metric("Stations Opened", len(open_stations))
+    c4.metric("Total Cost", f"₹{total_cost/100000:.1f}L")
+
+    m = folium.Map(location=CITY_CENTER, zoom_start=13, tiles="CartoDB positron")
+    HeatMap([[r.lat, r.lon, r.weight] for _, r in gps.iterrows()], radius=15, blur=10).add_to(m)
+    for _, r in stations.iterrows():
+        folium.CircleMarker([r.lat,r.lon], radius=5, color="#aaa", fill=True, fill_opacity=0.4,
+                            tooltip=f"Candidate {int(r.station_id)}").add_to(m)
+    for s in open_stations:
+        r = stations.loc[stations.station_id==s].iloc[0]
+        folium.Marker([r.lat,r.lon], icon=folium.Icon(color="green",icon="bolt",prefix="fa"),
+                      tooltip=f"⚡ Station {s} | {int(r.capacity_ports)} ports").add_to(m)
+        folium.Circle([r.lat,r.lon], radius=max_range*1000, color="green",
+                      fill=True, fill_opacity=0.05, weight=1).add_to(m)
+    for _, r in zones.iterrows():
+        folium.CircleMarker([r.lat,r.lon], radius=8, color="orange", fill=True, fill_opacity=0.7,
+                            tooltip=f"Zone {int(r.zone_id)} | Demand {int(r.demand)}").add_to(m)
+    st_folium(m, width=900, height=500)
+
+    st.subheader("📋 Opened Stations")
+    opened_df = stations[stations.station_id.isin(open_stations)][["station_id","lat","lon","install_cost","capacity_ports"]]
+    st.dataframe(opened_df, use_container_width=True)
+
+    st.subheader("📊 Cost by Zone Demand")
+    fig = px.bar(zones.sort_values("demand",ascending=False), x="zone_id", y="demand",
+                 title="Demand per Zone", labels={"zone_id":"Zone","demand":"Demand Weight"},
+                 template="plotly_white")
+    st.plotly_chart(fig, use_container_width=True)
+
 if "results" not in st.session_state:
     st.session_state.results = None
 
@@ -87,39 +120,7 @@ if run:
 
     open_stations = [s for s in S if pulp.value(y[s]) == 1]
     total_cost = pulp.value(prob.objective) or 0
-
-    c1,c2,c3,c4 = st.columns(4)
-    c1.metric("GPS Points", n_gps)
-    c2.metric("Demand Zones", n_clusters)
-    c3.metric("Stations Opened", len(open_stations))
-    c4.metric("Total Cost", f"₹{total_cost/100000:.1f}L")
-
-    m = folium.Map(location=CITY_CENTER, zoom_start=13, tiles="CartoDB positron")
-    HeatMap([[r.lat, r.lon, r.weight] for _, r in gps.iterrows()], radius=15, blur=10).add_to(m)
-    for _, r in stations.iterrows():
-        folium.CircleMarker([r.lat,r.lon], radius=5, color="#aaa", fill=True, fill_opacity=0.4,
-                            tooltip=f"Candidate {int(r.station_id)}").add_to(m)
-    for s in open_stations:
-        r = stations.loc[stations.station_id==s].iloc[0]
-        folium.Marker([r.lat,r.lon], icon=folium.Icon(color="green",icon="bolt",prefix="fa"),
-                      tooltip=f"⚡ Station {s} | {int(r.capacity_ports)} ports").add_to(m)
-        folium.Circle([r.lat,r.lon], radius=max_range*1000, color="green",
-                      fill=True, fill_opacity=0.05, weight=1).add_to(m)
-    for _, r in zones.iterrows():
-        folium.CircleMarker([r.lat,r.lon], radius=8, color="orange", fill=True, fill_opacity=0.7,
-                            tooltip=f"Zone {int(r.zone_id)} | Demand {int(r.demand)}").add_to(m)
-    st_folium(m, width=900, height=500)
-
-    st.subheader("📋 Opened Stations")
-    opened_df = stations[stations.station_id.isin(open_stations)][["station_id","lat","lon","install_cost","capacity_ports"]]
-    st.dataframe(opened_df, use_container_width=True)
-
-    st.subheader("📊 Cost by Zone Demand")
-    fig = px.bar(zones.sort_values("demand",ascending=False), x="zone_id", y="demand",
-                 title="Demand per Zone", labels={"zone_id":"Zone","demand":"Demand Weight"},
-                 template="plotly_white")
-    st.plotly_chart(fig, use_container_width=True)
-
+    
     st.session_state.results = {
         "open_stations": open_stations,
         "zones": zones,
@@ -128,13 +129,19 @@ if run:
         "n_clusters": n_clusters,
         "gps": gps
     }
+    output(open_stations, zones, stations, total_cost, n_clusters, gps)
 
 if st.session_state.results is not None:
 
     results = st.session_state.results
-
-    st.metric("Stations Opened",
-              len(results["open_stations"]))
+    open_stations = results['open_stations']
+    zones = results['zones']
+    stations = results['stations']
+    total_cost = results['total_cost']
+    n_clusters = results['n_clusters']
+    gps = results['gps']
+    
+    output(open_stations, zones, stations, total_cost, n_clusters, gps)
 
 else:
     st.info("👈 Set parameters and click Run Optimizer")

@@ -37,8 +37,8 @@ def haversine(lat1, lon1, lat2, lon2):
 
 if "optimizer_ran" not in st.session_state:
     st.session_state.optimizer_ran = False
-
-if st.button("🚀 Run Optimizer", type="primary"):
+    
+if run:
     st.session_state.optimizer_ran = True
 
 if st.session_state.optimizer_ran:

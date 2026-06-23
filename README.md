@@ -1,3 +1,7 @@
+## Live Demo
+
+🚀 Try the application here: https://ev-station-placement-emegxm295cskbs4lejeksp.streamlit.app/
+
 # ⚡ Hyperlocal EV Charging Station Placement Optimizer
 
 > **DS Layer**: Commuter GPS clustering (DBSCAN) + demand heatmap &nbsp;|&nbsp; **OR Layer**: Set Cover ILP — minimum cost stations to cover all demand zones

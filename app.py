@@ -121,6 +121,7 @@ if st.session_state.optimizer_ran:
                  title="Demand per Zone", labels={"zone_id":"Zone","demand":"Demand Weight"},
                  template="plotly_white")
     st.plotly_chart(fig, use_container_width=True)
+    st.session_state.optimizer_ran = False
     ...
 else:
     st.info("👈 Set parameters and click **Run Optimizer**")

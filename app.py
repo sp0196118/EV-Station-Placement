@@ -21,12 +21,13 @@ st.markdown("**DS Layer**: DBSCAN demand clustering &nbsp;|&nbsp; **OR Layer**: 
 CITY_CENTER = (28.4595, 77.0266)
 
 with st.sidebar:
-    st.header("⚙️ Parameters")
-    n_gps      = st.slider("Commuter GPS points", 300, 2000, 1000, 100)
-    n_stations = st.slider("Candidate station sites", 10, 40, 25)
-    max_range  = st.slider("Coverage radius (km)", 0.5, 3.0, 1.5, 0.25)
-    budget_lakh = st.slider("Budget (₹ lakh)", 20, 100, 50)
-    run = st.button("🚀 Run Optimizer", type="primary")
+    with st.form("optimizer_form"):
+        n_gps = st.slider("Commuter GPS points", 300, 2000, 1000, 100)
+        n_stations = st.slider("Candidate station sites", 10, 40, 25)
+        max_range = st.slider("Coverage radius (km)", 0.5, 3.0, 1.5, 0.25)
+        budget_lakh = st.slider("Budget (₹ lakh)", 20, 100, 50)
+
+        run = st.form_submit_button("🚀 Run Optimizer")
 
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371
@@ -35,13 +36,10 @@ def haversine(lat1, lon1, lat2, lon2):
     a = np.sin(dphi/2)**2 + np.cos(phi1)*np.cos(phi2)*np.sin(dlam/2)**2
     return 2*R*np.arctan2(np.sqrt(a), np.sqrt(1-a))
 
-if "optimizer_ran" not in st.session_state:
-    st.session_state.optimizer_ran = False
-    
-if run:
-    st.session_state.optimizer_ran = True
+if "results" not in st.session_state:
+    st.session_state.results = None
 
-if st.session_state.optimizer_ran:
+if run:
     random.seed(42); np.random.seed(42)
     HOTSPOTS = [(28.4949,77.0878),(28.4226,77.0478),(28.4673,77.0285),(28.5079,77.0956),(28.4380,77.1025)]
     lats, lons, weights = [], [], []
@@ -121,7 +119,22 @@ if st.session_state.optimizer_ran:
                  title="Demand per Zone", labels={"zone_id":"Zone","demand":"Demand Weight"},
                  template="plotly_white")
     st.plotly_chart(fig, use_container_width=True)
-    st.session_state.optimizer_ran = False
-    ...
+
+    st.session_state.results = {
+        "open_stations": open_stations,
+        "zones": zones,
+        "stations": stations,
+        "total_cost": total_cost,
+        "n_clusters": n_clusters,
+        "gps": gps
+    }
+
+if st.session_state.results is not None:
+
+    results = st.session_state.results
+
+    st.metric("Stations Opened",
+              len(results["open_stations"]))
+
 else:
-    st.info("👈 Set parameters and click **Run Optimizer**")
+    st.info("👈 Set parameters and click Run Optimizer")

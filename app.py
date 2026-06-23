@@ -34,11 +34,14 @@ def haversine(lat1, lon1, lat2, lon2):
     dphi, dlam = np.radians(lat2-lat1), np.radians(lon2-lon1)
     a = np.sin(dphi/2)**2 + np.cos(phi1)*np.cos(phi2)*np.sin(dlam/2)**2
     return 2*R*np.arctan2(np.sqrt(a), np.sqrt(1-a))
-    
-if st.button("🚀 Run Optimizer"):
+
+if "optimizer_ran" not in st.session_state:
+    st.session_state.optimizer_ran = False
+
+if st.button("🚀 Run Optimizer", type="primary"):
     st.session_state.optimizer_ran = True
 
-if st.session_state.get("optimizer_ran", False):
+if st.session_state.optimizer_ran:
     random.seed(42); np.random.seed(42)
     HOTSPOTS = [(28.4949,77.0878),(28.4226,77.0478),(28.4673,77.0285),(28.5079,77.0956),(28.4380,77.1025)]
     lats, lons, weights = [], [], []
@@ -118,5 +121,6 @@ if st.session_state.get("optimizer_ran", False):
                  title="Demand per Zone", labels={"zone_id":"Zone","demand":"Demand Weight"},
                  template="plotly_white")
     st.plotly_chart(fig, use_container_width=True)
+    ...
 else:
     st.info("👈 Set parameters and click **Run Optimizer**")
